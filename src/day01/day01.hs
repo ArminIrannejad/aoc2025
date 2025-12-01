@@ -45,7 +45,7 @@ hitsDuring curr (dir, steps) =
           distanceToZero = if base == 0 then 100 else base
        in hitsFrom distanceToZero steps
     'L' ->
-      let base = curr `mod` 100
+      let base = curr
           distanceToZero = if base == 0 then 100 else base
        in hitsFrom distanceToZero steps
     _ -> error ""
