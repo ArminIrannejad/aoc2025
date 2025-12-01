@@ -3,10 +3,6 @@
 ## Expected Result:
 
 ```console
-```
-
-### Perf:
-
-```console
+Part 1: 1018
 ```
 
