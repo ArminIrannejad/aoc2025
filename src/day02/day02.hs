@@ -23,6 +23,16 @@ isInvalid n =
         && let (a, b) = splitAt (len `div` 2) s
             in a == b
 
+isInvalid2 :: Int -> Bool
+isInvalid2 n =
+  let s = show n
+      len = length s
+      patLens = [d | d <- [1 .. len `div` 2], len `mod` d == 0]
+      isRep d =
+        let chunks = chunksOf d s
+         in all (== head chunks) chunks -- partial but chunks shouldn't be []
+   in any isRep patLens
+
 part1 :: Input -> Int
 part1 cont =
   let ranges = map parseInput cont
@@ -30,12 +40,19 @@ part1 cont =
       invalidIds = filter isInvalid allIds
    in sum invalidIds
 
+part2 :: Input -> Int
+part2 cont =
+  let ranges = map parseInput cont
+      allIds = concatMap listGenerator ranges
+      invalidIds = filter isInvalid2 allIds
+   in sum invalidIds
+
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let cont = splitOn "," raw
   printf "Part 1: %d\n" $ part1 cont
-  -- printf "Part 2: %d\n" $ part2 cont
+  printf "Part 2: %d\n" $ part2 cont
 
 -- print $ map listGenerator $ map parseInput cont
 -- print $ map (listGenerator . parseInput) cont
