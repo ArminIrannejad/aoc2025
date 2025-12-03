@@ -9,7 +9,7 @@ type Range = (Int, Int)
 
 parseInput :: String -> Range
 parseInput s =
-  let (a, _ : b) = break (== '-') s
+  let (a, _ : b) = break (== '-') s -- also partial
    in (read a, read b)
 
 listGenerator :: Range -> [Int]
