@@ -23,7 +23,7 @@ bestIndex :: Int -> String -> (Int, Char)
 bestIndex _ [] = error ""
 bestIndex allowedFirstsLen s@(c0 : _) = go 0 (0, c0)
   where
-    go i best@(bestIdx, bestChar)
+    go i best@(_, bestChar)
       | i >= allowedFirstsLen = best
       | otherwise =
           let c = s !! i
