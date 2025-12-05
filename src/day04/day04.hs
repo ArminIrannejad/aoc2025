@@ -10,15 +10,7 @@ type Direction = (Int, Int)
 
 directions :: [Direction]
 directions =
-  [ (-1, -1),
-    (-1, 0),
-    (-1, 1),
-    (0, -1),
-    (0, 1),
-    (1, -1),
-    (1, 0),
-    (1, 1)
-  ]
+  [(dr, dc) | dr <- [-1 .. 1], dc <- [-1 .. 1], (dr, dc) /= (0, 0)]
 
 height :: Input -> Int
 height = length
@@ -69,7 +61,50 @@ part1 ls =
       isAccessible ls (r, c)
     ]
 
+step :: Input -> (Int, Input)
+step ls =
+  let h = height ls
+      w = width ls
+
+      mask :: [[Bool]]
+      mask =
+        [ [ isAccessible ls (r, c)
+          | c <- [0 .. w - 1]
+          ]
+        | r <- [0 .. h - 1]
+        ]
+
+      removed :: Int
+      removed =
+        length
+          [ ()
+          | row <- mask,
+            b <- row,
+            b
+          ]
+
+      newGrid :: Input
+      newGrid =
+        [ [ if acc && ch == '@'
+              then '.'
+              else ch
+          | (ch, acc) <- zip row maskRow
+          ]
+        | (row, maskRow) <- zip ls mask
+        ]
+   in (removed, newGrid)
+
+part2 :: Input -> Int
+part2 = go 0
+  where
+    go acc ls =
+      let (removed, ls') = step ls
+       in if removed == 0
+            then acc
+            else go (acc + removed) ls'
+
 main :: IO ()
 main = do
   cont <- lines <$> readFile "input.txt"
   printf "Part 1 %d\n" $ part1 cont
+  printf "Part 2 %d\n" $ part2 cont
