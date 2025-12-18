@@ -1,49 +1,115 @@
 module Main where
 
+import Data.Char
 import Text.Printf
 
 type Input = [String]
 
-type Range = (Int, Int)
+type Answer = Int
 
-splitOnBlank :: [String] -> ([String], [String])
-splitOnBlank [] = ([], [])
-splitOnBlank ("" : rest) = ([], rest)
-splitOnBlank (x : xs) =
-  let (as, bs) = splitOnBlank xs
-   in (x : as, bs)
+solveProblemPart1 :: [String] -> Answer
+solveProblemPart1 segLines =
+  let toks =
+        [ t
+        | line <- segLines,
+          let t = trim line,
+          not (null t)
+        ]
+      opTok = last toks
+      op =
+        case opTok of
+          [c] -> c
+          _ -> error ("TF is this!?!?!?" ++ opTok)
+      nums = map (read :: String -> Answer) (init toks)
+   in applyAll (opFun op) nums
 
-parseRange :: String -> Range
-parseRange s =
-  let (a, _ : b) = break (== '-') s
-   in (read a, read b)
+solveProblemPart2 :: [String] -> Answer
+solveProblemPart2 segLines =
+  let opRow = last segLines
+      op = firstNonSpace opRow
 
-parseInput :: Input -> ([Range], [Int])
-parseInput lines =
-  let (rangeLines, idLines) = splitOnBlank lines
-      ranges = map parseRange rangeLines
-      ids = map read idLines
-   in (ranges, ids)
+      digitRows = init segLines
+      w = length opRow
 
-isFresh :: [Range] -> Int -> Bool
-isFresh ranges x =
-  any (\(lo, hi) -> x >= lo && x <= hi) ranges
+      nums =
+        [ readDigitsTopToBottom digitRows j
+        | j <- [w - 1, w - 2 .. 0],
+          colHasDigit digitRows j
+        ]
+   in applyAll (opFun op) nums
 
-rangeLength :: Range -> Int
-rangeLength (lo, hi) = hi - lo + 1
+colHasDigit :: [String] -> Int -> Bool
+colHasDigit rows j = any (\row -> isDigit (row !! j)) rows
 
--- >>> rangeLength (8, 31)
--- 24
+readDigitsTopToBottom :: [String] -> Int -> Answer
+readDigitsTopToBottom rows j =
+  let ds = [row !! j | row <- rows, isDigit (row !! j)]
+   in read ds
 
-part1 :: Input -> Int
-part1 lines =
-  let (ranges, ids) = parseInput lines
-   in length [i | i <- ids, isFresh ranges i]
+firstNonSpace :: String -> Char
+firstNonSpace s =
+  case dropWhile isSpace s of
+    (c : _) -> c
+    [] -> error ""
 
-part2 :: Input -> Int
-part2 lines =
-  let (ranges, _) = parseInput lines
-   in sum $ map rangeLength ranges
+opFun :: Char -> (Answer -> Answer -> Answer)
+opFun op =
+  case op of
+    '+' -> (+)
+    '*' -> (*)
+    _ -> error [op]
+
+applyAll :: (Answer -> Answer -> Answer) -> [Answer] -> Answer
+applyAll _ [] = error ""
+applyAll _ [x] = x
+applyAll f (x : xs) = go x xs
+  where
+    go acc [] = acc
+    go acc (y : ys) = go (f acc y) ys
+
+rangesTrue :: [Bool] -> [(Int, Int)]
+rangesTrue = go 0
+  where
+    go _ [] = []
+    go i xs =
+      case dropWhile not xs of
+        [] -> []
+        ys ->
+          let start = i + (length xs - length ys)
+              (block, rest) = span id ys
+              end = start + length block - 1
+           in (start, end) : go (end + 1) rest
+
+slice :: Int -> Int -> String -> String
+slice l r s = take (r - l + 1) (drop l s)
+
+padRight :: Int -> String -> String
+padRight n s = s ++ replicate (n - length s) ' '
+
+trim :: String -> String
+trim = dropWhile isSpace . reverse . dropWhile isSpace . reverse
+
+grandTotalWith :: ([String] -> Answer) -> Input -> Answer
+grandTotalWith solveOne ls0 =
+  let w = maximum (map length ls0)
+      ls = map (padRight w) ls0
+
+      sepCols = [all (\row -> row !! i == ' ') ls | i <- [0 .. w - 1]]
+      goodCols = map not sepCols
+
+      problemRanges = rangesTrue goodCols
+
+      problems =
+        [ [slice l r row | row <- ls]
+        | (l, r) <- problemRanges
+        ]
+   in sum (map solveOne problems)
+
+part1 :: Input -> Answer
+part1 = grandTotalWith solveProblemPart1
+
+part2 :: Input -> Answer
+part2 = grandTotalWith solveProblemPart2
 
 main :: IO ()
 main = do
